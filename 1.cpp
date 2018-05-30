@@ -82,6 +82,7 @@ public:
     bool is_in_seg (const pt & A, const pt & B) const {
         return is_on_line(A, B) && doubleLessOrEqual((A - *this) % (B - *this), 0);
     }
+    bool ccw(pt a, pt b);
 };
 
 struct line { // structure for lines
@@ -95,11 +96,11 @@ public:
     }
 };
 
-long double det (long double a, long double b, long double c, long double d) {
+long double det(long double a, long double b, long double c, long double d) {
     return a * d - b * c;
 }
 
-bool intersect (line m, line n, pt &res) { // check if lines have intersection and where it is
+bool intersect(line m, line n, pt &res) { // check if lines have intersection and where it is
     long double zn = det (m.a, m.b, n.a, n.b);
     if (abs (zn) < EPS)
         return false;
@@ -108,26 +109,26 @@ bool intersect (line m, line n, pt &res) { // check if lines have intersection a
     return true;
 }
 
-bool parallel (line m, line n) { // check if lines are parallel
+bool parallel(line m, line n) { // check if lines are parallel
     return abs (det (m.a, m.b, n.a, n.b)) < EPS;
 }
 
-bool equivalent (line m, line n) { // check if lines are equivalent
+bool equivalent(line m, line n) { // check if lines are equivalent
     return abs(det(m.a, m.b, n.a, n.b)) < EPS
            && abs(det(m.a, m.c, n.a, n.c)) < EPS
            && abs(det(m.b, m.c, n.b, n.c)) < EPS;
 }
-pt closest_point (line l, pt p) { // find the closest point on the line
+pt closest_point(line l, pt p) { // find the closest point on the line
     long double k = (l.a * p.x + l.b * p.y + l.c) / (l.a * l.a + l.b * l.b);
     return pt(p.x - l.a * k, p.y - l.b * k);
 }
 
-int point_in_line (line l, pt p) { // check if point is in line
+int point_in_line(line l, pt p) { // check if point is in line
     long double s = l.a * p.x + l.b * p.y + l.c;
     return s < - EPS ? - 1 : s > EPS ? 1 : 0;
 }
 
-bool point_in_ray (pt p, pt p1, pt p2) { // check if point is in ray
+bool point_in_ray(pt p, pt p1, pt p2) { // check if point is in ray
     line l = line(p1, p2);
     if (point_in_line(l, p) != 0) return false;
 
@@ -143,7 +144,7 @@ bool point_in_ray (pt p, pt p1, pt p2) { // check if point is in ray
         return p.x <= p1.x;
 }
 
-long double dist_from_pt_to_ray (pt p, pt p1, pt p2) { // find distance between point and ray
+long double dist_from_pt_to_ray(pt p, pt p1, pt p2) { // find distance between point and ray
     line l = line(p1, p2);
     pt t = closest_point(l, p);
     if (point_in_ray (t, p1, p2))
@@ -151,16 +152,20 @@ long double dist_from_pt_to_ray (pt p, pt p1, pt p2) { // find distance between 
     return p.distTo(p1);
 }
 
-int main() {
-    ios_base::sync_with_stdio(false);
-    cin.tie(nullptr);
-    cout.tie(nullptr);
-    cout << setprecision(6);
-    pt p1, p2, p3, p4, res = pt();
-    p1.scan(); // start of the first ray
-    p2.scan(); // any point in the first ray
-    p3.scan(); // start of the second ray
-    p4.scan(); // any point from the second ray
+long double area_triangle(pt a, pt b, pt c) { // oriented area of a triangle
+    return 0.5 * (a.x * b.y + b.x * c.y + c.x * a.y - a.y * b.x - b.y * c.x - c.y * a.x);
+}
+
+bool pt :: ccw(pt a, pt b) { // is the point to the right of the segment in the counterclockwise direction?
+    return area_triangle(*this, a, b) > EPS;
+}
+
+long double dist_between_rays (pt p1, pt p2, pt p3, pt p4) { // distance between two rays
+    pt res = pt();
+    // p1 - start of the first ray
+    // p2 - any point in the first ray
+    // p3 - start of the second ray
+    // p4 - any point from the second ray
     line line1 = line(p1, p2), line2 = line(p3, p4);
     if (equivalent(line1, line2)) {
         if (point_in_ray(p1, p3, p4) or point_in_ray(p3, p1, p2)) cout << 0; else cout << p1.distTo(p3);
@@ -176,5 +181,12 @@ int main() {
             return 0;
         }
     }
-    cout << min(dist_from_pt_to_ray(p3, p1, p2), dist_from_pt_to_ray(p1, p3, p4));
+    return min(dist_from_pt_to_ray(p3, p1, p2), dist_from_pt_to_ray(p1, p3, p4));
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(nullptr);
+    cout.tie(nullptr);
+    cout << fixed << setprecision(6);
 }
